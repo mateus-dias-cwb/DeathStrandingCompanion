@@ -223,3 +223,102 @@
   .carry-size { padding: 3px 4px; font-size: 7px; }
   .road-source-note { flex-wrap: wrap; font-size: 6px; }
 }
+
+.road-heading p { color: #91aaae; }
+.road-heading-mark { border-color: rgba(118, 228, 234, .28); background: rgba(10, 30, 36, .62); color: #8eb6bb; }
+.road-heading-mark svg { color: var(--cyan); }
+.road-cargo-board { border-color: rgba(111, 207, 218, .28); background: var(--panel); box-shadow: 0 14px 38px rgba(0, 0, 0, .22), inset 0 1px rgba(180, 244, 245, .04); }
+.road-cargo-heading { border-color: var(--line); background: linear-gradient(90deg, rgba(18, 50, 58, .92), rgba(9, 26, 32, .96)); }
+.road-cargo-icon { background: rgba(41, 103, 111, .4); color: var(--cyan); }
+.road-cargo-title h2 { color: #d8eeee; }
+.container-total { border-color: var(--line); }
+.container-total strong { color: #dbf4f3; text-shadow: 0 0 18px rgba(118, 228, 234, .18); }
+.container-total span { color: #83a9ae; }
+.road-total-card { border-color: rgba(111, 207, 218, .18); background: rgba(8, 23, 29, .62); }
+.road-total-card-title { color: #a1bdc0; }
+.road-total-card-title strong { color: #e0f2f1; }
+.material-icon { border-color: rgba(118, 228, 234, .2); background: rgba(21, 49, 56, .8); color: #9bd9da; }
+.material-gold { color: #f0cb7c; background: rgba(90, 68, 31, .38); border-color: rgba(231, 185, 89, .24); }
+.material-blue { color: #8fd3eb; background: rgba(30, 68, 84, .4); border-color: rgba(111, 194, 226, .22); }
+.material-clay { color: #e4a68c; background: rgba(81, 48, 40, .42); border-color: rgba(218, 143, 112, .22); }
+.container-count { border-color: rgba(118, 228, 234, .2); background: rgba(15, 39, 45, .9); color: #82a6aa; }
+.container-glyph { color: #73cbd0; }
+.container-size { color: #92b6ba; }
+.container-count b { color: #d5f1f1; }
+.container-count.count-xl1, .container-count.count-xl2, .container-count.count-xl3, .container-count.count-xl4 { border-color: rgba(118, 228, 234, .32); background: rgba(25, 65, 72, .72); }
+.summary-sent { color: #83a3a7; }
+.summary-sent b { color: #c8ece8; }
+.summary-sent strong { color: #efbf6d; }
+.loose-cargo-note { border-color: rgba(231, 185, 89, .24); background: rgba(73, 57, 29, .25); color: #d4b56e; }
+.loose-cargo-note b { color: #f1d58e; }
+.road-cargo-foot { color: #819da2; }
+.road-cargo-foot svg { color: #6ccbd1; }
+
+.road-list-toolbar { border-color: var(--line); background: rgba(7, 21, 27, .97); box-shadow: 0 8px 18px rgba(0, 0, 0, .24); }
+.build-status-tab, .road-route-tab { color: #7f9da2; }
+.build-status-tab.active, .road-route-tab.active { color: #d7f1f1; }
+.build-status-tab.active::after { background: var(--cyan); box-shadow: 0 0 8px rgba(118, 228, 234, .45); }
+.road-route-tab.active::after { background: #54c7d0; box-shadow: 0 0 8px rgba(84, 199, 208, .36); }
+.build-status-tab span, .road-route-tab span { color: #64858a; }
+.road-search { border-color: rgba(118, 228, 234, .24); }
+.road-search input { color: #d5e7e8; }
+.road-search input::placeholder { color: #69878d; }
+.packing-goal-switch { border-color: rgba(118, 228, 234, .2); background: rgba(7, 20, 25, .72); }
+.packing-goal-switch button { color: #829fa3; }
+.packing-goal-switch button:hover { color: #d2f2f2; }
+.packing-goal-switch button.active { border-color: rgba(118, 228, 234, .32); background: rgba(31, 77, 85, .75); color: #d5f4f3; box-shadow: inset 0 -1px var(--cyan); }
+.road-clear-button { border-color: rgba(118, 228, 234, .22); color: #8db4b8; }
+.road-clear-button:hover { border-color: var(--cyan); background: rgba(31, 77, 85, .6); color: #e2ffff; }
+
+.road-paver-card { border-color: rgba(111, 207, 218, .2); background: linear-gradient(100deg, rgba(14, 36, 43, .96), rgba(8, 23, 29, .94)); }
+.road-paver-card:hover { border-color: rgba(118, 228, 234, .44); }
+.road-paver-card.not-counted { opacity: .76; }
+.road-paver-card.is-built { border-color: rgba(102, 204, 179, .26); background: linear-gradient(100deg, rgba(17, 48, 47, .88), rgba(8, 26, 30, .92)); }
+.road-inclusion input, .road-built-toggle input { accent-color: var(--cyan); }
+.road-paver-icon { background: rgba(31, 77, 85, .52); color: #8bdde0; }
+.road-paver-name { color: #9bb8bc; }
+.road-paver-name i { color: #54777d; }
+.road-paver-name b { color: #d0e9e9; }
+.road-paver-status { color: #eabd68; }
+.road-paver-status.is-complete { color: #6bd7bd; }
+.road-paver-status.is-unknown { color: #e69b7f; }
+.road-paver-cargo > span { border-color: rgba(118, 228, 234, .2); background: rgba(28, 66, 73, .58); color: #a9d4d6; }
+.road-paver-cargo > .no-cargo { color: #738e93; }
+.road-built-toggle { color: #83a1a5; }
+.is-built .road-built-toggle { color: #7dd9c4; }
+.road-paver-editor { border-color: var(--line); background: rgba(6, 19, 24, .68); }
+.paver-resource-card { border-color: rgba(111, 207, 218, .16); background: rgba(13, 34, 40, .8); }
+.paver-resource-title strong { color: #c3dcdd; }
+.capacity-hint { color: #76959a; }
+.paver-input-row label, .paver-required-value { color: #7e9ca1; }
+.paver-required-value strong { border-color: rgba(118, 228, 234, .16); background: rgba(19, 47, 54, .84); color: #c1d9da; }
+.paver-input-row input { border-color: rgba(118, 228, 234, .26); background: rgba(4, 17, 22, .86); color: #dff4f3; }
+.paver-remaining { border-color: rgba(111, 207, 218, .18); }
+.paver-remaining span { color: #84a4a8; }
+.paver-remaining strong { color: #f0c36f; }
+.paver-container-plan > span { color: #81a7aa; }
+.paver-container-plan > span svg { color: var(--cyan); }
+.carry-size { border-color: rgba(118, 228, 234, .35); background: linear-gradient(180deg, rgba(35, 89, 96, .72), rgba(17, 49, 56, .9)); color: #b5e8e8; box-shadow: inset 0 1px rgba(196, 248, 249, .07); }
+.carry-size i { color: #e1ffff; }
+.loose-plan { border-color: rgba(231, 185, 89, .2); }
+.loose-plan > b { color: #f0d38b; }
+.paver-sent-total { border-color: rgba(111, 207, 218, .17); color: #79989d; }
+.paver-sent-total b { color: #c5e8e6; }
+.paver-sent-total i { color: #f0c16b; }
+.paver-editor-foot { color: #779399; }
+.paver-editor-foot svg { color: #69c8ce; }
+.paver-target-warning { border-color: #d99c54; background: rgba(79, 53, 27, .38); color: #e0bd7e; }
+.empty-road-list { border-color: rgba(118, 228, 234, .25); }
+.empty-road-art { border-color: rgba(118, 228, 234, .24); background: rgba(24, 57, 64, .55); color: var(--cyan); }
+.empty-road-list strong { color: #c6e0e1; }
+.empty-road-list span, .road-source-note { color: #78959a; }
+.road-source-note > span:first-child { color: #9fc1c4; }
+.road-source-note a { color: #69d4db; }
+.source-divider { color: #4f767d; }
+
+@media (max-width: 560px) {
+  .road-cargo-heading { background: linear-gradient(120deg, rgba(18, 50, 58, .96), rgba(8, 24, 30, .98)); }
+  .road-total-card { background: rgba(8, 23, 29, .8); }
+  .road-paver-row { background: transparent; }
+  .road-paver-cargo > span { border-color: rgba(118, 228, 234, .24); background: rgba(22, 56, 63, .68); color: #b6e7e7; }
+}
