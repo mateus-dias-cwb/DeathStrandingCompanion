@@ -33,7 +33,7 @@ const categoryOptions: ('All structures' | Category)[] = ['All structures', 'Net
 const blankInventory: Inventory = { chiral: 0, metals: 0, ceramics: 0, chemicals: 0, alloys: 0 };
 
 function App() {
-  const [activePlanner, setActivePlanner] = useState<'structures' | 'roads'>('structures');
+  const [activePlanner, setActivePlanner] = useState<'structures' | 'roads'>('roads');
   const [activeCategory, setActiveCategory] = useState<(typeof categoryOptions)[number]>('All structures');
   const [search, setSearch] = useState('');
   const [plan, setPlan] = useState<PlanItem[]>([]);

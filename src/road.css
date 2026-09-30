@@ -165,7 +165,25 @@
   .road-expand, .road-delete { width: 23px; height: 23px; flex-basis: 23px; }
   .road-paver-editor { padding: 10px 8px; }
   .paver-resource-grid { grid-template-columns: 1fr; gap: 6px; }
-  .paver-resource-card { padding: 8px; }
-  .paver-input-row { grid-template-columns: 1fr 1fr; }
+  .paver-resource-card {
+    display: grid;
+    grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+    grid-template-areas: "title inputs" "remaining carry";
+    align-items: center;
+    gap: 4px 8px;
+    padding: 6px 7px;
+  }
+  .paver-resource-title { grid-area: title; min-width: 0; }
+  .paver-resource-title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .paver-resource-title .capacity-hint { display: none; }
+  .paver-input-row { grid-area: inputs; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 0; }
+  .paver-input-row label { gap: 2px; font-size: 6px; }
+  .paver-input-row input { height: 25px; }
+  .paver-remaining { grid-area: remaining; gap: 5px; margin-top: 0; padding-top: 0; border-top: 0; }
+  .paver-remaining span { font-size: 6px; }
+  .paver-remaining strong { font-size: 10px; }
+  .paver-container-plan { grid-area: carry; justify-content: flex-end; margin-top: 0; }
+  .paver-container-plan > span { font-size: 6px; }
+  .carry-size { padding: 2px 3px; font-size: 6px; }
   .road-source-note { flex-wrap: wrap; font-size: 6px; }
 }
