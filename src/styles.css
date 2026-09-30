@@ -45,6 +45,7 @@ button:disabled { cursor: default; opacity: .45; }
 .install-button:hover { border-color: #91a69a; background: #eef2ed; }
 .offline-label { display: flex; align-items: center; gap: 7px; }
 .offline-dot { background: #d5a33a; box-shadow: 0 0 0 3px rgba(213, 163, 58, .13); }
+.offline-label.is-online .offline-dot { background: #79a78d; box-shadow: 0 0 0 3px rgba(121, 167, 141, .16); }
 .help-button, .icon-button { display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: #7e8987; cursor: pointer; }
 .help-button:hover, .icon-button:hover { color: var(--ink); }
 .profile-mark { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 50%; background: #d5ddda; color: #4c6662; font: 600 11px var(--mono); }
@@ -172,9 +173,14 @@ h1 { font: 600 42px/.95 var(--display); letter-spacing: .4px; color: #1f2a2c; }
 .bottom-status { position: fixed; right: 0; bottom: 0; left: 0; z-index: 4; height: 28px; display: flex; align-items: center; justify-content: space-between; padding: 0 4.4%; border-top: 1px solid #d0d6d1; background: rgba(245, 246, 242, .96); color: #9aa39f; font: 7px var(--mono); letter-spacing: .7px; }
 .bottom-status > div { display: flex; align-items: center; gap: 7px; }
 .bottom-status b { color: #66736e; font-weight: 500; }
-.status-indicator { width: 5px; height: 5px; background: #d3a23a; }
+.status-indicator { width: 5px; height: 5px; background: #d3a23a; box-shadow: 0 0 7px rgba(211, 162, 58, .55); }
+.status-indicator.is-online { background: #79a78d; box-shadow: 0 0 7px rgba(121, 167, 141, .65); }
+.status-indicator.is-offline { background: #d3a23a; }
+.footer-meta { gap: 14px !important; }
 .footer-game { color: #89948f; }
 .footer-game span { padding: 0 3px; color: #c4a04f; }
+.footer-version { color: #89948f; }
+.footer-version b { color: #66736e; }
 
 .modal-backdrop { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 20px; background: rgba(27, 38, 36, .38); backdrop-filter: blur(3px); animation: fade-in .18s both; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
@@ -295,8 +301,10 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline-color: var(
 .brand-mark::before, .brand-mark::after { background: var(--cyan); }
 .brand-mark span { background: var(--amber); box-shadow: 0 0 9px rgba(118, 228, 234, .65); }
 .brand-copy small, .topbar-center, .offline-label { color: #8faeb2; }
-.signal-dot, .status-indicator { background: var(--cyan); box-shadow: 0 0 8px rgba(118, 228, 234, .55); }
+.signal-dot, .status-indicator.is-online { background: var(--cyan); box-shadow: 0 0 8px rgba(118, 228, 234, .55); }
 .offline-dot { background: var(--amber); box-shadow: 0 0 0 3px rgba(238, 184, 94, .13); }
+.offline-label.is-online .offline-dot { background: var(--cyan); box-shadow: 0 0 0 3px rgba(118, 228, 234, .16), 0 0 8px rgba(118, 228, 234, .55); }
+.status-indicator.is-offline { background: var(--amber); box-shadow: 0 0 7px rgba(238, 184, 94, .55); }
 .topbar-divider { color: #42636a; }
 .install-button { border-color: rgba(118, 228, 234, .36); background: rgba(20, 52, 60, .74); color: #a9e9e9; }
 .install-button:hover { border-color: var(--cyan); background: rgba(34, 82, 91, .85); }
@@ -391,6 +399,8 @@ h1 { color: #d9eeee; text-shadow: 0 0 18px rgba(83, 189, 200, .12); letter-spaci
 .bottom-status b { color: #a7c8ca; }
 .footer-game { color: #86a6aa; }
 .footer-game span { color: var(--cyan); }
+.footer-version { color: #86a6aa; }
+.footer-version b { color: #a7c8ca; }
 
 .modal-backdrop { background: rgba(1, 8, 12, .78); backdrop-filter: blur(5px); }
 .recipe-modal { border-color: rgba(118, 228, 234, .42); background: linear-gradient(145deg, #102a31, #08191f); box-shadow: 0 22px 80px rgba(0, 0, 0, .56), 0 0 28px rgba(44, 172, 186, .1); }

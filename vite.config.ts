@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import type { Plugin, OutputBundle } from 'vite';
 import react from '@vitejs/plugin-react';
+import packageJson from './package.json';
 
 const serviceWorkerPlugin: Plugin = {
   name: 'bridge-planner-service-worker',
@@ -38,4 +39,7 @@ const serviceWorkerPlugin: Plugin = {
 export default defineConfig(({ command }) => ({
   plugins: [react(), serviceWorkerPlugin],
   base: command === 'build' ? '/DeathStrandingCompanion/' : '/',
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version),
+  },
 }));

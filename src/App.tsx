@@ -33,6 +33,7 @@ const categoryOptions: ('All structures' | Category)[] = ['All structures', 'Net
 const blankInventory: Inventory = { chiral: 0, metals: 0, ceramics: 0, chemicals: 0, alloys: 0 };
 
 function App() {
+  const [connectionStatus, setConnectionStatus] = useState<'online' | 'offline'>('offline');
   const [activePlanner, setActivePlanner] = useState<'structures' | 'roads'>('roads');
   const [activeCategory, setActiveCategory] = useState<(typeof categoryOptions)[number]>('All structures');
   const [search, setSearch] = useState('');
@@ -42,6 +43,46 @@ function App() {
   const [editing, setEditing] = useState<Structure | null>(null);
   const [showInventory, setShowInventory] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    let checking = false;
+
+    const checkServer = async () => {
+      if (checking) return;
+      checking = true;
+
+      try {
+        const healthUrl = new URL(`${import.meta.env.BASE_URL}sw.js`, window.location.href);
+        healthUrl.searchParams.set('healthcheck', String(Date.now()));
+        const response = await fetch(healthUrl, { method: 'HEAD', cache: 'no-store' });
+        if (active) setConnectionStatus(response.ok ? 'online' : 'offline');
+      } catch {
+        if (active) setConnectionStatus('offline');
+      } finally {
+        checking = false;
+      }
+    };
+
+    const handleOffline = () => setConnectionStatus('offline');
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') void checkServer();
+    };
+
+    void checkServer();
+    const intervalId = window.setInterval(checkServer, 30_000);
+    window.addEventListener('online', checkServer);
+    window.addEventListener('offline', handleOffline);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('online', checkServer);
+      window.removeEventListener('offline', handleOffline);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     const handleInstallPrompt = (event: Event) => {
@@ -75,6 +116,7 @@ function App() {
   }, [plan, recipes]);
 
   const totalStructures = plan.reduce((sum, item) => sum + item.quantity, 0);
+  const isOnline = connectionStatus === 'online';
   const addToPlan = (id: string) => setPlan((current) => {
     const existing = current.find((item) => item.id === id);
     return existing
@@ -109,7 +151,9 @@ function App() {
         <div className="topbar-center"><span className="signal-dot" /> UCA NETWORK <span className="topbar-divider">/</span> FIELD PLANNER</div>
         <div className="topbar-right">
           {installPrompt && <button className="install-button" type="button" onClick={installApp}><Download size={14} /><span>Install</span></button>}
-          <span className="offline-label"><span className="offline-dot" /> OFFLINE READY</span>
+          <span className={`offline-label ${isOnline ? 'is-online' : 'is-offline'}`} aria-live="polite">
+            <span className="offline-dot" /> {isOnline ? 'ONLINE' : 'OFFLINE'}
+          </span>
           <button className="help-button" type="button" aria-label="About recipe values" title="Recipes are editable estimates for base construction"><CircleHelp size={17} /></button>
           <div className="profile-mark">S</div>
         </div>
@@ -256,7 +300,11 @@ function App() {
         </> : <RoadPlanner />}
       </main>
 
-      <footer className="bottom-status"><div><span className="status-indicator" /> CONNECTION STATUS <b>OFFLINE</b></div><div>BRIDGES ESTABLISHED <b>01 / 05</b></div><div className="footer-game">DEATH STRANDING <span>•</span> FIELD TOOLS</div></footer>
+      <footer className="bottom-status">
+        <div aria-live="polite"><span className={`status-indicator ${isOnline ? 'is-online' : 'is-offline'}`} /> CONNECTION STATUS <b>{isOnline ? 'ONLINE' : 'OFFLINE'}</b></div>
+        <div>BRIDGES ESTABLISHED <b>01 / 05</b></div>
+        <div className="footer-meta"><span className="footer-game">DEATH STRANDING <span>•</span> FIELD TOOLS</span><span className="footer-version">VERSION <b>v{__APP_VERSION__}</b></span></div>
+      </footer>
 
       {editing && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditing(null); }}>
