@@ -104,7 +104,7 @@ function App() {
       <header className="topbar">
         <a className="brand" href="#top" aria-label="Bridge Planner home">
           <div className="brand-mark"><span /></div>
-          <span className="brand-copy"><strong>BRIDGE</strong><small>NETWORK OPERATIONS</small></span>
+          <span className="brand-copy"><strong>BRIDGES</strong><small>NETWORK OPERATIONS</small></span>
         </a>
         <div className="topbar-center"><span className="signal-dot" /> UCA NETWORK <span className="topbar-divider">/</span> FIELD PLANNER</div>
         <div className="topbar-right">
