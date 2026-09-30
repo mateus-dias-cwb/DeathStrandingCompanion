@@ -1,4 +1,5 @@
-const CACHE_NAME = 'bridge-planner-shell-v1';
+const CACHE_NAME = 'bridge-planner-shell-v2';
+const PRECACHE_BUILD_ASSETS = [];
 const APP_SHELL = [
   './',
   './manifest.webmanifest',
@@ -11,7 +12,7 @@ const APP_SHELL = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL))
+      .then((cache) => cache.addAll([...APP_SHELL, ...PRECACHE_BUILD_ASSETS]))
       .then(() => self.skipWaiting()),
   );
 });
@@ -29,22 +30,31 @@ self.addEventListener('fetch', (event) => {
 
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put('./', copy));
-          return response;
-        })
-        .catch(() => caches.match('./')),
+      (async () => {
+        let response;
+        try {
+          response = await fetch(event.request);
+        } catch (error) {
+          const cached = await caches.match('./');
+          if (cached) return cached;
+          throw error;
+        }
+
+        if (!response.ok) {
+          return (await caches.match('./')) || response;
+        }
+
+        await (await caches.open(CACHE_NAME)).put('./', response.clone());
+        return response;
+      })(),
     );
     return;
   }
 
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
+    caches.match(event.request).then((cached) => cached || fetch(event.request).then(async (response) => {
       if (response.ok) {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        await (await caches.open(CACHE_NAME)).put(event.request, response.clone());
       }
       return response;
     })),
