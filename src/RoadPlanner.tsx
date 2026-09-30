@@ -23,6 +23,7 @@ import {
   type RoadMaterialAmounts,
   type RoadMaterialKey,
 } from './roadData';
+import { roadPaverPresets, roadPresetSource } from './roadPresets';
 
 type RouteId = (typeof roadRoutes)[number]['id'];
 type RoadEntry = {
@@ -30,6 +31,7 @@ type RoadEntry = {
   route: RouteId;
   paver: number;
   included: boolean;
+  targetKnown: boolean;
   required: RoadMaterialAmounts;
   deposited: RoadMaterialAmounts;
 };
@@ -41,8 +43,38 @@ type PlannedRoad = RoadEntry & {
 type RouteFilter = 'all' | RouteId;
 const STORAGE_KEY = 'bridge-planner-road-pavers-v1';
 const PACKING_GOAL_KEY = 'bridge-planner-packing-goal-v1';
+const PRESET_VERSION_KEY = 'bridge-planner-road-presets-v1';
+const PRESET_VERSION = 'ds1-community-targets-v1';
 const emptyContainerCounts = (): ContainerCounts => ({ S: 0, M: 0, L: 0, XL1: 0, XL2: 0, XL3: 0, XL4: 0 });
 const materialIcons = { chiral: Gem, metals: Layers, ceramics: Package };
+
+function createPresetRoads(): RoadEntry[] {
+  return roadPaverPresets.map((preset) => ({
+    id: `preset-${preset.route}-${preset.paver}`,
+    route: preset.route,
+    paver: preset.paver,
+    included: true,
+    targetKnown: Boolean(preset.required),
+    required: preset.required ?? emptyRoadAmounts(),
+    deposited: emptyRoadAmounts(),
+  }));
+}
+
+function mergeRoadPresets(savedRoads: RoadEntry[]): RoadEntry[] {
+  const defaults = createPresetRoads();
+  const defaultsByKey = new Map(defaults.map((road) => [`${road.route}-${road.paver}`, road]));
+  const saved = savedRoads.map((road) => {
+    const preset = defaultsByKey.get(`${road.route}-${road.paver}`);
+    const hasSavedTarget = Object.values(road.required).some((amount) => amount > 0);
+    return {
+      ...road,
+      required: hasSavedTarget || !preset?.targetKnown ? road.required : preset.required,
+      targetKnown: road.targetKnown ?? (hasSavedTarget || Boolean(preset?.targetKnown)),
+    };
+  });
+  const savedKeys = new Set(saved.map((road) => `${road.route}-${road.paver}`));
+  return [...saved, ...defaults.filter((road) => !savedKeys.has(`${road.route}-${road.paver}`))];
+}
 
 function readPackingGoal(): PackingGoal {
   try {
@@ -55,9 +87,14 @@ function readPackingGoal(): PackingGoal {
 function readSavedRoads(): RoadEntry[] {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) as RoadEntry[] : [];
+    if (saved === null) {
+      return localStorage.getItem(PRESET_VERSION_KEY) === PRESET_VERSION ? [] : createPresetRoads();
+    }
+    const savedRoads = JSON.parse(saved) as RoadEntry[];
+    if (!Array.isArray(savedRoads)) return createPresetRoads();
+    return localStorage.getItem(PRESET_VERSION_KEY) === PRESET_VERSION ? savedRoads : mergeRoadPresets(savedRoads);
   } catch {
-    return [];
+    return createPresetRoads();
   }
 }
 
@@ -72,6 +109,7 @@ function RoadPlanner() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(roads));
+      localStorage.setItem(PRESET_VERSION_KEY, PRESET_VERSION);
     } catch {
       // Storage can be unavailable in private browsing modes.
     }
@@ -126,6 +164,7 @@ function RoadPlanner() {
       route: newRoute,
       paver: nextPaver,
       included: true,
+      targetKnown: false,
       required: emptyRoadAmounts(),
       deposited: emptyRoadAmounts(),
     };
@@ -143,6 +182,7 @@ function RoadPlanner() {
     updateRoad(id, (road) => ({
       ...road,
       [field]: { ...road[field], [key]: Math.max(0, Math.floor(amount)) },
+      targetKnown: field === 'required' ? true : road.targetKnown,
     }));
   };
 
@@ -233,6 +273,7 @@ function RoadPlanner() {
           const totalRemaining = roadMaterials.reduce((sum, material) => sum + road.remaining[material.key], 0);
           const complete = totalRequired > 0 && totalRemaining === 0;
           const packageLabels = roadMaterials.flatMap(({ key, short }) => {
+            if (!road.targetKnown) return ['Target unknown'];
             if (key === 'chiral') return road.remaining[key] > 0 ? [`${road.remaining[key].toLocaleString()} CXl`] : [];
             return containerSizes.flatMap((size) => road.containers[key][size] > 0 ? [`${short} ${size} ×${road.containers[key][size]}`] : []);
           });
@@ -245,7 +286,7 @@ function RoadPlanner() {
                 <span className="road-paver-icon"><Route size={17} /></span>
                 <button className="road-paver-summary" type="button" aria-expanded={expanded} onClick={() => setExpandedRoad(expanded ? null : road.id)}>
                   <span className="road-paver-name">UC ROUTE {road.route} <i>/</i> PAVER <b>{String(road.paver).padStart(2, '0')}</b></span>
-                  <span className={`road-paver-status ${complete ? 'is-complete' : ''}`}>{complete ? <><Check size={12} /> COMPLETE</> : `${totalRemaining.toLocaleString()} REMAINING`}</span>
+                  <span className={`road-paver-status ${complete ? 'is-complete' : !road.targetKnown ? 'is-unknown' : ''}`}>{!road.targetKnown ? 'TARGET UNKNOWN' : complete ? <><Check size={12} /> COMPLETE</> : `${totalRemaining.toLocaleString()} REMAINING`}</span>
                 </button>
                 <div className="road-paver-cargo">{packageLabels.length > 0 ? packageLabels.map((label) => <span key={label}>{label}</span>) : <span className="no-cargo">Set paver totals</span>}</div>
                 <button className="icon-button road-expand" type="button" aria-label={`${expanded ? 'Collapse' : 'Edit'} Route ${road.route} paver ${road.paver}`} onClick={() => setExpandedRoad(expanded ? null : road.id)}><ChevronDown size={17} /></button>
@@ -257,6 +298,7 @@ function RoadPlanner() {
                     <label>ROUTE<select value={road.route} onChange={(event) => updateRoad(road.id, (current) => ({ ...current, route: event.target.value as RouteId }))}>{roadRoutes.map((route) => <option value={route.id} key={route.id}>{route.label}</option>)}</select></label>
                     <label>PAVER #<input type="number" min="1" step="1" value={road.paver} onChange={(event) => updateRoad(road.id, (current) => ({ ...current, paver: Math.max(1, Math.floor(Number(event.target.value) || 1)) }))} /></label>
                   </div>
+                  {!road.targetKnown && <div className="paver-target-warning">No verified preset for this paver. Enter its REQUIRED amounts from the in-game paver.</div>}
                   <div className="paver-resource-grid">
                     {roadMaterials.map(({ key, name, tone, capacity }) => {
                       const Icon = materialIcons[key];
@@ -284,14 +326,14 @@ function RoadPlanner() {
                       );
                     })}
                   </div>
-                  <div className="paver-editor-foot"><CircleHelp size={13} /><span>Read target and deposited values from this auto-paver in-game. Material levels can vary by segment and online contributions.</span></div>
+                  <div className="paver-editor-foot"><CircleHelp size={13} /><span>Preset targets come from community-captured DS1 pavers; check in-game values if they differ. Deposited amounts vary by save and online contributions.</span></div>
                 </div>
               )}
             </article>
           );
         })}
       </div>
-      <div className="road-source-note"><span>DS1 BASE GAME CARGO SIZES</span><a href="https://mikefay.info/wiki/index.php?title=Game-Death-Stranding-Basic-Materials" target="_blank" rel="noreferrer">Capacity reference</a><span className="source-divider">/</span><span>Chiral Crystals are carried loose.</span></div>
+      <div className="road-source-note"><span>DS1 COMMUNITY PAVER TARGETS</span><a href={roadPresetSource} target="_blank" rel="noreferrer">Paver data source</a><span className="source-divider">/</span><span>Four Route 23 targets are unverified; deposits start at 0. Chiral Crystals are carried loose.</span></div>
     </section>
   );
 }

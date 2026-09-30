@@ -63,6 +63,7 @@
 .road-paver-name b { color: #34443e; font-weight: 600; }
 .road-paver-status { display: flex; align-items: center; gap: 4px; color: #ad833b; font: 7px var(--mono); letter-spacing: .45px; }
 .road-paver-status.is-complete { color: #668d79; }
+.road-paver-status.is-unknown { color: #a06f5a; }
 .road-paver-cargo { min-width: 0; display: flex; flex: 1; flex-wrap: wrap; align-items: center; gap: 4px; }
 .road-paver-cargo > span { padding: 3px 5px; border: 1px solid #e2e7e2; background: #f3f6f2; color: #73817a; font: 7px var(--mono); white-space: nowrap; }
 .road-paver-cargo > .no-cargo { border-color: transparent; background: transparent; color: #a2aaa6; }
@@ -75,6 +76,7 @@
 .paver-label-fields label { display: flex; align-items: center; gap: 6px; color: #98a29d; font: 7px var(--mono); }
 .paver-label-fields select { height: 25px; }
 .paver-label-fields input { width: 52px; height: 25px; padding: 0 5px; border: 1px solid #d9dfda; background: #fbfcf9; color: #4c5a54; text-align: right; font: 9px var(--mono); }
+.paver-target-warning { margin: -3px 0 8px; padding: 6px 8px; border-left: 2px solid #c99257; background: #f8f1e8; color: #96734a; font-size: 8px; line-height: 1.45; }
 .paver-resource-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .paver-resource-card { min-width: 0; padding: 9px; border: 1px solid #e0e5df; background: #fbfcf9; }
 .paver-resource-title { min-height: 25px; display: flex; align-items: center; gap: 6px; }
@@ -167,6 +169,7 @@
   .road-paver-summary { min-width: 0; flex: 1 1 auto; }
   .road-paver-name { font-size: 7px; }
   .road-paver-status { font-size: 6px; }
+  .paver-target-warning { margin-bottom: 7px; font-size: 7px; }
   .road-paver-cargo { display: none; }
   .road-expand, .road-delete { width: 23px; height: 23px; flex-basis: 23px; }
   .road-paver-editor { padding: 10px 8px; }
