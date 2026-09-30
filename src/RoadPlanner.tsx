@@ -42,7 +42,7 @@ type RouteFilter = 'all' | RouteId;
 const STORAGE_KEY = 'bridge-planner-road-pavers-v1';
 const PACKING_GOAL_KEY = 'bridge-planner-packing-goal-v1';
 const PRESET_VERSION_KEY = 'bridge-planner-road-presets-v1';
-const PRESET_VERSION = 'ds1-fixed-catalog-v1';
+const PRESET_VERSION = 'ds1-fixed-catalog-unchecked-v2';
 const emptyContainerCounts = (): ContainerCounts => ({ S: 0, M: 0, L: 0, XL1: 0, XL2: 0, XL3: 0, XL4: 0 });
 const materialIcons = { chiral: Gem, metals: Layers, ceramics: Package };
 
@@ -51,7 +51,7 @@ function createPresetRoads(): RoadEntry[] {
     id: `preset-${preset.route}-${preset.paver}`,
     route: preset.route,
     paver: preset.paver,
-    included: Boolean(preset.required),
+    included: false,
     targetKnown: Boolean(preset.required),
     required: preset.required ?? emptyRoadAmounts(),
     deposited: emptyRoadAmounts(),
@@ -62,7 +62,7 @@ function mergeRoadPresets(savedRoads: RoadEntry[]): RoadEntry[] {
   const savedByKey = new Map(savedRoads.map((road) => [`${road.route}-${road.paver}`, road]));
   return createPresetRoads().map((preset) => {
     const saved = savedByKey.get(`${preset.route}-${preset.paver}`);
-    return saved ? { ...preset, deposited: saved.deposited ?? emptyRoadAmounts(), included: saved.included ?? preset.included } : preset;
+    return saved ? { ...preset, deposited: saved.deposited ?? emptyRoadAmounts(), included: false } : preset;
   });
 }
 
