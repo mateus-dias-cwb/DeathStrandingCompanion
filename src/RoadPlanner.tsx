@@ -284,7 +284,7 @@ function RoadPlanner() {
           const totalRemaining = roadMaterials.reduce((sum, material) => sum + road.remaining[material.key], 0);
           const complete = totalRequired > 0 && totalRemaining === 0;
           const packageLabels = roadMaterials.flatMap(({ key, short }) => {
-            if (!road.targetKnown) return ['Target unknown'];
+            if (!road.targetKnown) return key === 'chiral' ? ['Target unknown'] : [];
             if (key === 'chiral') return road.remaining[key] > 0 ? [`${road.remaining[key].toLocaleString()} CXl`] : [];
             return containerSizes.flatMap((size) => road.containers[key][size] > 0 ? [`${short} ${size} ×${road.containers[key][size]}`] : []);
           });
