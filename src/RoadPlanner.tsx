@@ -9,6 +9,7 @@ import {
   Package,
   RotateCcw,
   Route,
+  X,
 } from 'lucide-react';
 import {
   containerSizes,
@@ -29,6 +30,7 @@ type RoadEntry = {
   route: RouteId;
   paver: number;
   included: boolean;
+  built: boolean;
   targetKnown: boolean;
   required: RoadMaterialAmounts;
   deposited: RoadMaterialAmounts;
@@ -39,10 +41,11 @@ type PlannedRoad = RoadEntry & {
 };
 
 type RouteFilter = 'all' | RouteId;
+type BuildFilter = 'all' | 'to-build' | 'built';
 const STORAGE_KEY = 'bridge-planner-road-pavers-v1';
 const PACKING_GOAL_KEY = 'bridge-planner-packing-goal-v1';
 const PRESET_VERSION_KEY = 'bridge-planner-road-presets-v1';
-const PRESET_VERSION = 'ds1-fixed-catalog-unchecked-v2';
+const PRESET_VERSION = 'ds1-fixed-catalog-built-v3';
 const emptyContainerCounts = (): ContainerCounts => ({ S: 0, M: 0, L: 0, XL1: 0, XL2: 0, XL3: 0, XL4: 0 });
 const materialIcons = { chiral: Gem, metals: Layers, ceramics: Package };
 
@@ -52,6 +55,7 @@ function createPresetRoads(): RoadEntry[] {
     route: preset.route,
     paver: preset.paver,
     included: false,
+    built: false,
     targetKnown: Boolean(preset.required),
     required: preset.required ?? emptyRoadAmounts(),
     deposited: emptyRoadAmounts(),
@@ -62,7 +66,12 @@ function mergeRoadPresets(savedRoads: RoadEntry[]): RoadEntry[] {
   const savedByKey = new Map(savedRoads.map((road) => [`${road.route}-${road.paver}`, road]));
   return createPresetRoads().map((preset) => {
     const saved = savedByKey.get(`${preset.route}-${preset.paver}`);
-    return saved ? { ...preset, deposited: saved.deposited ?? emptyRoadAmounts(), included: false } : preset;
+    return saved ? {
+      ...preset,
+      deposited: saved.deposited ?? emptyRoadAmounts(),
+      built: saved.built ?? false,
+      included: saved.included ?? false,
+    } : preset;
   });
 }
 
@@ -90,8 +99,10 @@ function RoadPlanner() {
   const [roads, setRoads] = useState<RoadEntry[]>(readSavedRoads);
   const [packingGoal, setPackingGoal] = useState<PackingGoal>(readPackingGoal);
   const [routeFilter, setRouteFilter] = useState<RouteFilter>('all');
+  const [buildFilter, setBuildFilter] = useState<BuildFilter>('all');
   const [expandedRoad, setExpandedRoad] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     try {
@@ -122,12 +133,21 @@ function RoadPlanner() {
 
   const includedSummary = useMemo(() => {
     const remaining = emptyRoadAmounts();
+    const sent = emptyRoadAmounts();
+    const overage = emptyRoadAmounts();
     const containers: Record<'metals' | 'ceramics', ContainerCounts> = {
       metals: emptyContainerCounts(),
       ceramics: emptyContainerCounts(),
     };
-    plannedRoads.filter((road) => road.included).forEach((road) => {
-      roadMaterials.forEach(({ key }) => { remaining[key] += road.remaining[key]; });
+    plannedRoads.filter((road) => road.included && !road.built).forEach((road) => {
+      roadMaterials.forEach(({ key, capacity }) => {
+        remaining[key] += road.remaining[key];
+        const amountSent = capacity
+          ? containerSizes.reduce((sum, size, index) => sum + road.containers[key][size] * capacity[index], 0)
+          : road.remaining[key];
+        sent[key] += amountSent;
+        overage[key] += Math.max(0, amountSent - road.remaining[key]);
+      });
       (['metals', 'ceramics'] as const).forEach((key) => {
         containerSizes.forEach((size) => { containers[key][size] += road.containers[key][size]; });
       });
@@ -135,15 +155,25 @@ function RoadPlanner() {
     const packageCount = (['metals', 'ceramics'] as const).reduce((sum, key) => (
       sum + containerSizes.reduce((materialTotal, size) => materialTotal + containers[key][size], 0)
     ), 0);
-    return { remaining, containers, packageCount, roadCount: plannedRoads.filter((road) => road.included).length };
+    return {
+      remaining,
+      sent,
+      overage,
+      containers,
+      packageCount,
+      roadCount: plannedRoads.filter((road) => road.included && !road.built).length,
+    };
   }, [plannedRoads]);
   const hasStock = roads.some((road) => Object.values(road.deposited).some((amount) => amount > 0));
 
-  const visibleRoads = plannedRoads.filter((road) => {
+  const matchingRoads = plannedRoads.filter((road) => {
     const matchesRoute = routeFilter === 'all' || road.route === routeFilter;
     const label = `${road.route} ${road.paver}`;
     return matchesRoute && label.includes(search.trim());
   });
+  const visibleRoads = matchingRoads
+    .filter((road) => buildFilter === 'all' || (buildFilter === 'built' ? road.built : !road.built))
+    .sort((first, second) => Number(first.built) - Number(second.built));
 
   const updateRoad = (id: string, update: (road: RoadEntry) => RoadEntry) => {
     setRoads((current) => current.map((road) => road.id === id ? update(road) : road));
@@ -157,8 +187,8 @@ function RoadPlanner() {
   };
 
   const resetStock = () => {
-    if (!window.confirm('Are you sure you want to reset the inputted values?')) return;
     setRoads((current) => current.map((road) => ({ ...road, deposited: emptyRoadAmounts() })));
+    setShowResetConfirm(false);
   };
 
   return (
@@ -179,10 +209,6 @@ function RoadPlanner() {
             <div><span className="eyebrow-small">SELECTED PAVERS / {String(includedSummary.roadCount).padStart(2, '0')}</span><h2 id="road-cargo-title">Cargo to complete</h2></div>
           </div>
           <div className="road-cargo-tools">
-            <div className="packing-goal-switch" role="group" aria-label="Container packing priority">
-              <button className={packingGoal === 'fewest' ? 'active' : ''} type="button" aria-pressed={packingGoal === 'fewest'} onClick={() => setPackingGoal('fewest')}>Fewest containers</button>
-              <button className={packingGoal === 'least-overage' ? 'active' : ''} type="button" aria-pressed={packingGoal === 'least-overage'} onClick={() => setPackingGoal('least-overage')}>Least overage</button>
-            </div>
             <div className="container-total"><strong>{includedSummary.packageCount}</strong><span>CONTAINERS<br />TO CARRY</span></div>
           </div>
         </div>
@@ -199,7 +225,8 @@ function RoadPlanner() {
                   <strong>{includedSummary.remaining[key].toLocaleString()}</strong>
                 </div>
                 {counts ? (
-                  <div className="container-count-grid" aria-label={`${name} container breakdown`}>
+                  <>
+                    <div className="container-count-grid" aria-label={`${name} container breakdown`}>
                     {containerSizes.map((size, index) => (
                       <div className={`container-count count-${size.toLowerCase()}`} key={size} title={`${size}: ${roadMaterials.find((item) => item.key === key)?.capacity?.[index]} units each`}>
                         <span className="container-glyph"><Package size={13 + Math.min(index, 3)} /></span>
@@ -207,7 +234,9 @@ function RoadPlanner() {
                         <b>{counts[size]}</b>
                       </div>
                     ))}
-                  </div>
+                    </div>
+                    <div className="summary-sent"><span>WILL SEND <b>{includedSummary.sent[key].toLocaleString()}</b></span>{includedSummary.overage[key] > 0 && <strong>+{includedSummary.overage[key].toLocaleString()} extra</strong>}</div>
+                  </>
                 ) : (
                   <div className="loose-cargo-note"><Gem size={13} /><span>Loose cargo, not containerized</span><b>{includedSummary.remaining.chiral.toLocaleString()} CXl</b></div>
                 )}
@@ -215,10 +244,20 @@ function RoadPlanner() {
             );
           })}
         </div>
-        <div className="road-cargo-foot"><CircleHelp size={14} /><span>{packingGoal === 'fewest' ? 'Fewest containers first; ties use the least overage.' : 'Least overage first; ties use the fewest containers.'} Totals include checked pavers only. Road requirements vary by paver.</span></div>
+        <div className="road-cargo-foot"><CircleHelp size={14} /><span>{packingGoal === 'fewest' ? 'Fewest containers first; ties use the least overage.' : 'Least overage first; ties use the fewest containers.'} Totals include selected, unbuilt pavers only. Road requirements vary by paver.</span></div>
       </section>
 
       <div className="road-list-toolbar">
+        <div className="build-status-tabs" role="tablist" aria-label="Filter pavers by build status">
+          {([
+            ['all', 'All'],
+            ['to-build', 'To build'],
+            ['built', 'Built'],
+          ] as const).map(([status, label]) => {
+            const count = matchingRoads.filter((road) => status === 'all' || (status === 'built' ? road.built : !road.built)).length;
+            return <button className={`build-status-tab ${buildFilter === status ? 'active' : ''}`} key={status} type="button" role="tab" aria-selected={buildFilter === status} onClick={() => setBuildFilter(status)}>{label}<span>{count}</span></button>;
+          })}
+        </div>
         <div className="road-route-tabs" role="tablist" aria-label="Filter roads by route">
           {(['all', '23', '41'] as const).map((route) => {
             const label = route === 'all' ? 'All routes' : `UC Route ${route}`;
@@ -228,7 +267,11 @@ function RoadPlanner() {
         </div>
         <div className="road-actions">
           <label className="road-search"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Find a paver" aria-label="Find a paver" /></label>
-          <button className="icon-button road-clear-button" type="button" aria-label="Reset in-stock values" title="Reset in-stock values" onClick={resetStock} disabled={!hasStock}><RotateCcw size={15} /></button>
+          <div className="packing-goal-switch" role="group" aria-label="Container packing priority">
+            <button className={packingGoal === 'fewest' ? 'active' : ''} type="button" aria-pressed={packingGoal === 'fewest'} onClick={() => setPackingGoal('fewest')}>Fewest</button>
+            <button className={packingGoal === 'least-overage' ? 'active' : ''} type="button" aria-pressed={packingGoal === 'least-overage'} onClick={() => setPackingGoal('least-overage')}>Least overage</button>
+          </div>
+          <button className="icon-button road-clear-button" type="button" aria-label="Reset in-stock values" title="Reset in-stock values" onClick={() => setShowResetConfirm(true)} disabled={!hasStock}><RotateCcw size={15} /></button>
         </div>
       </div>
 
@@ -246,7 +289,7 @@ function RoadPlanner() {
             return containerSizes.flatMap((size) => road.containers[key][size] > 0 ? [`${short} ${size} ×${road.containers[key][size]}`] : []);
           });
           return (
-            <article className={`road-paver-card ${road.included ? '' : 'not-counted'}`} key={road.id}>
+            <article className={`road-paver-card ${road.built ? 'is-built' : road.included ? '' : 'not-counted'}`} key={road.id}>
               <div className="road-paver-row">
                 <label className="road-inclusion" title={road.targetKnown ? 'Include this paver in the cargo total' : 'Target data is unavailable for this paver'}>
                   <input type="checkbox" checked={road.included} disabled={!road.targetKnown} onChange={(event) => updateRoad(road.id, (current) => ({ ...current, included: event.target.checked }))} aria-label={`Include UC Route ${road.route} paver ${road.paver} in cargo total`} />
@@ -257,6 +300,10 @@ function RoadPlanner() {
                   <span className={`road-paver-status ${complete ? 'is-complete' : !road.targetKnown ? 'is-unknown' : ''}`}>{!road.targetKnown ? 'TARGET UNKNOWN' : complete ? <><Check size={12} /> COMPLETE</> : `${totalRemaining.toLocaleString()} REMAINING`}</span>
                 </button>
                 <div className="road-paver-cargo">{packageLabels.length > 0 ? packageLabels.map((label) => <span key={label}>{label}</span>) : <span className="no-cargo">Set paver totals</span>}</div>
+                <label className="road-built-toggle" title="Mark this paver as already built">
+                  <input type="checkbox" checked={road.built} onChange={(event) => updateRoad(road.id, (current) => ({ ...current, built: event.target.checked }))} aria-label={`Mark UC Route ${road.route} paver ${road.paver} as built`} />
+                  <span>BUILT</span>
+                </label>
                 <button className="icon-button road-expand" type="button" aria-label={`${expanded ? 'Collapse' : 'Show'} Route ${road.route} paver ${road.paver}`} onClick={() => setExpandedRoad(expanded ? null : road.id)}><ChevronDown size={17} /></button>
               </div>
               {expanded && (
@@ -297,6 +344,15 @@ function RoadPlanner() {
         })}
       </div>
       <div className="road-source-note"><span>DS1 COMMUNITY PAVER TARGETS</span><a href={roadPresetSource} target="_blank" rel="noreferrer">Paver data source</a><span className="source-divider">/</span><span>Four Route 23 targets are unverified and excluded from totals. Deposits start at 0. Chiral Crystals are carried loose.</span></div>
+      {showResetConfirm && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowResetConfirm(false); }}>
+          <section className="recipe-modal reset-modal" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
+            <div className="modal-heading"><div><span className="eyebrow-small">ROAD PLANNER / RESET</span><h2 id="reset-modal-title">Clear in-stock amounts?</h2></div><button className="icon-button" type="button" aria-label="Close reset confirmation" onClick={() => setShowResetConfirm(false)}><X size={18} /></button></div>
+            <p className="modal-copy">This sets every paver's deposited materials to zero. Your built status, selections, and packing preference will stay as they are.</p>
+            <div className="modal-actions"><button className="text-button" type="button" onClick={() => setShowResetConfirm(false)}>Cancel</button><button className="confirm-button" type="button" onClick={resetStock}><RotateCcw size={14} /> Reset amounts</button></div>
+          </section>
+        </div>
+      )}
     </section>
   );
 }
