@@ -137,6 +137,7 @@ function RoadPlanner() {
     ), 0);
     return { remaining, containers, packageCount, roadCount: plannedRoads.filter((road) => road.included).length };
   }, [plannedRoads]);
+  const hasStock = roads.some((road) => Object.values(road.deposited).some((amount) => amount > 0));
 
   const visibleRoads = plannedRoads.filter((road) => {
     const matchesRoute = routeFilter === 'all' || road.route === routeFilter;
@@ -155,9 +156,9 @@ function RoadPlanner() {
     }));
   };
 
-  const clearRoads = () => {
-    setRoads([]);
-    setExpandedRoad(null);
+  const resetStock = () => {
+    if (!window.confirm('Are you sure you want to reset the inputted values?')) return;
+    setRoads((current) => current.map((road) => ({ ...road, deposited: emptyRoadAmounts() })));
   };
 
   return (
@@ -227,7 +228,7 @@ function RoadPlanner() {
         </div>
         <div className="road-actions">
           <label className="road-search"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Find a paver" aria-label="Find a paver" /></label>
-          <button className="icon-button road-clear-button" type="button" aria-label="Clear all pavers" title="Clear all pavers" onClick={clearRoads} disabled={roads.length === 0}><RotateCcw size={15} /></button>
+          <button className="icon-button road-clear-button" type="button" aria-label="Reset in-stock values" title="Reset in-stock values" onClick={resetStock} disabled={!hasStock}><RotateCcw size={15} /></button>
         </div>
       </div>
 
