@@ -261,6 +261,10 @@ function RoadPlanner() {
                     {roadMaterials.map(({ key, name, tone, capacity }) => {
                       const Icon = materialIcons[key];
                       const remaining = road.remaining[key];
+                      const suggestedAmount = capacity
+                        ? containerSizes.reduce((sum, size, index) => sum + road.containers[key][size] * capacity[index], 0)
+                        : remaining;
+                      const overage = Math.max(0, suggestedAmount - remaining);
                       return (
                         <section className="paver-resource-card" key={key}>
                           <div className="paver-resource-title"><span className={`material-icon material-${tone}`}><Icon size={16} /></span><strong>{name}</strong>{key !== 'chiral' && <span className="capacity-hint">S {capacity?.[0]} / XL4 {capacity?.[6]}</span>}</div>
@@ -270,9 +274,12 @@ function RoadPlanner() {
                           </div>
                           <div className="paver-remaining"><span>STILL NEEDED</span><strong>{remaining.toLocaleString()}</strong></div>
                           {key !== 'chiral' && remaining > 0 && (
-                            <div className="paver-container-plan"><span><Package size={13} /> CARRY</span><div>{containerSizes.map((size) => road.containers[key][size] > 0 && <b className={`carry-size carry-${size.toLowerCase()}`} key={size}>{size} <i>×{road.containers[key][size]}</i></b>)}</div></div>
+                            <div className="paver-cargo-details">
+                              <div className="paver-container-plan"><span><Package size={13} /> CARRY</span><div>{containerSizes.map((size) => road.containers[key][size] > 0 && <b className={`carry-size carry-${size.toLowerCase()}`} key={size}>{size} <i>×{road.containers[key][size]}</i></b>)}</div></div>
+                              <div className="paver-sent-total"><span>WILL SEND</span><b>{suggestedAmount.toLocaleString()} {key === 'metals' ? 'MTL' : 'CRM'}</b>{overage > 0 && <i>+{overage.toLocaleString()} extra</i>}</div>
+                            </div>
                           )}
-                          {key === 'chiral' && remaining > 0 && <div className="paver-container-plan loose-plan"><span><Gem size={13} /> CARRY LOOSE</span><b>{remaining.toLocaleString()} CXl</b></div>}
+                          {key === 'chiral' && remaining > 0 && <div className="paver-cargo-details"><div className="paver-sent-total loose-plan"><span><Gem size={13} /> WILL SEND LOOSE</span><b>{suggestedAmount.toLocaleString()} CXl</b></div></div>}
                         </section>
                       );
                     })}

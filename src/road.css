@@ -87,7 +87,9 @@
 .paver-remaining { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding-top: 6px; border-top: 1px solid #e6eae5; }
 .paver-remaining span { color: #929d97; font: 7px var(--mono); letter-spacing: .35px; }
 .paver-remaining strong { color: #ae8239; font: 500 12px var(--mono); }
+.paver-cargo-details { margin-top: 7px; }
 .paver-container-plan { display: flex; align-items: flex-start; justify-content: space-between; gap: 5px; margin-top: 7px; }
+.paver-cargo-details .paver-container-plan { margin-top: 0; }
 .paver-container-plan > span { display: flex; flex: 0 0 auto; align-items: center; gap: 4px; color: #8b9791; font: 7px var(--mono); }
 .paver-container-plan > span svg { color: #82968b; }
 .paver-container-plan > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 3px; }
@@ -95,6 +97,10 @@
 .carry-size i { color: #53675d; font-style: normal; }
 .loose-plan { padding-top: 5px; border-top: 1px dashed #ebe5d8; }
 .loose-plan > b { color: #857044; font: 500 8px var(--mono); }
+.paver-sent-total { display: flex; flex-wrap: wrap; align-items: baseline; gap: 5px; margin-top: 5px; padding-top: 5px; border-top: 1px dashed #e2e8e1; color: #87938b; font: 7px var(--mono); }
+.paver-sent-total b { color: #4d6557; font: 500 8px var(--mono); }
+.paver-sent-total i { color: #b17f37; font-style: normal; }
+.paver-sent-total.loose-plan { align-items: center; justify-content: space-between; margin-top: 0; padding-top: 5px; }
 .paver-editor-foot { display: flex; align-items: flex-start; gap: 6px; margin-top: 9px; color: #969f9a; font-size: 8px; line-height: 1.4; }
 .paver-editor-foot svg { flex: 0 0 auto; margin-top: 1px; }
 .empty-road-list { min-height: 170px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; border: 1px dashed #cbd4cd; text-align: center; }
@@ -182,7 +188,11 @@
   .paver-remaining { grid-area: remaining; gap: 5px; margin-top: 0; padding-top: 0; border-top: 0; }
   .paver-remaining span { font-size: 6px; }
   .paver-remaining strong { font-size: 10px; }
-  .paver-container-plan { grid-area: carry; justify-content: flex-end; margin-top: 0; }
+  .paver-cargo-details { grid-area: carry; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; margin-top: 0; }
+  .paver-container-plan { justify-content: flex-end; margin-top: 0; }
+  .paver-sent-total { justify-content: flex-end; gap: 4px; margin-top: 0; padding-top: 3px; font-size: 6px; }
+  .paver-sent-total b, .paver-sent-total i { font-size: 7px; }
+  .paver-sent-total.loose-plan { gap: 3px; padding-top: 3px; }
   .paver-container-plan > span { font-size: 6px; }
   .carry-size { padding: 2px 3px; font-size: 6px; }
   .road-source-note { flex-wrap: wrap; font-size: 6px; }
