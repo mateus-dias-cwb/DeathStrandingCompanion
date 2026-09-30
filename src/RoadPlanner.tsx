@@ -7,10 +7,8 @@ import {
   Gem,
   Layers,
   Package,
-  Plus,
   RotateCcw,
   Route,
-  Trash2,
 } from 'lucide-react';
 import {
   containerSizes,
@@ -44,7 +42,7 @@ type RouteFilter = 'all' | RouteId;
 const STORAGE_KEY = 'bridge-planner-road-pavers-v1';
 const PACKING_GOAL_KEY = 'bridge-planner-packing-goal-v1';
 const PRESET_VERSION_KEY = 'bridge-planner-road-presets-v1';
-const PRESET_VERSION = 'ds1-community-targets-v1';
+const PRESET_VERSION = 'ds1-fixed-catalog-v1';
 const emptyContainerCounts = (): ContainerCounts => ({ S: 0, M: 0, L: 0, XL1: 0, XL2: 0, XL3: 0, XL4: 0 });
 const materialIcons = { chiral: Gem, metals: Layers, ceramics: Package };
 
@@ -53,7 +51,7 @@ function createPresetRoads(): RoadEntry[] {
     id: `preset-${preset.route}-${preset.paver}`,
     route: preset.route,
     paver: preset.paver,
-    included: true,
+    included: Boolean(preset.required),
     targetKnown: Boolean(preset.required),
     required: preset.required ?? emptyRoadAmounts(),
     deposited: emptyRoadAmounts(),
@@ -61,19 +59,11 @@ function createPresetRoads(): RoadEntry[] {
 }
 
 function mergeRoadPresets(savedRoads: RoadEntry[]): RoadEntry[] {
-  const defaults = createPresetRoads();
-  const defaultsByKey = new Map(defaults.map((road) => [`${road.route}-${road.paver}`, road]));
-  const saved = savedRoads.map((road) => {
-    const preset = defaultsByKey.get(`${road.route}-${road.paver}`);
-    const hasSavedTarget = Object.values(road.required).some((amount) => amount > 0);
-    return {
-      ...road,
-      required: hasSavedTarget || !preset?.targetKnown ? road.required : preset.required,
-      targetKnown: road.targetKnown ?? (hasSavedTarget || Boolean(preset?.targetKnown)),
-    };
+  const savedByKey = new Map(savedRoads.map((road) => [`${road.route}-${road.paver}`, road]));
+  return createPresetRoads().map((preset) => {
+    const saved = savedByKey.get(`${preset.route}-${preset.paver}`);
+    return saved ? { ...preset, deposited: saved.deposited ?? emptyRoadAmounts(), included: saved.included ?? preset.included } : preset;
   });
-  const savedKeys = new Set(saved.map((road) => `${road.route}-${road.paver}`));
-  return [...saved, ...defaults.filter((road) => !savedKeys.has(`${road.route}-${road.paver}`))];
 }
 
 function readPackingGoal(): PackingGoal {
@@ -87,9 +77,7 @@ function readPackingGoal(): PackingGoal {
 function readSavedRoads(): RoadEntry[] {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === null) {
-      return localStorage.getItem(PRESET_VERSION_KEY) === PRESET_VERSION ? [] : createPresetRoads();
-    }
+    if (saved === null) return createPresetRoads();
     const savedRoads = JSON.parse(saved) as RoadEntry[];
     if (!Array.isArray(savedRoads)) return createPresetRoads();
     return localStorage.getItem(PRESET_VERSION_KEY) === PRESET_VERSION ? savedRoads : mergeRoadPresets(savedRoads);
@@ -102,7 +90,6 @@ function RoadPlanner() {
   const [roads, setRoads] = useState<RoadEntry[]>(readSavedRoads);
   const [packingGoal, setPackingGoal] = useState<PackingGoal>(readPackingGoal);
   const [routeFilter, setRouteFilter] = useState<RouteFilter>('all');
-  const [newRoute, setNewRoute] = useState<RouteId>('23');
   const [expandedRoad, setExpandedRoad] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
@@ -157,32 +144,14 @@ function RoadPlanner() {
     return matchesRoute && label.includes(search.trim());
   });
 
-  const addPaver = () => {
-    const nextPaver = roads.filter((road) => road.route === newRoute).reduce((highest, road) => Math.max(highest, road.paver), 0) + 1;
-    const newRoad: RoadEntry = {
-      id: `paver-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      route: newRoute,
-      paver: nextPaver,
-      included: true,
-      targetKnown: false,
-      required: emptyRoadAmounts(),
-      deposited: emptyRoadAmounts(),
-    };
-    setRoads((current) => [...current, newRoad]);
-    setExpandedRoad(newRoad.id);
-    setRouteFilter(newRoute);
-    setSearch('');
-  };
-
   const updateRoad = (id: string, update: (road: RoadEntry) => RoadEntry) => {
     setRoads((current) => current.map((road) => road.id === id ? update(road) : road));
   };
 
-  const updateAmount = (id: string, field: 'required' | 'deposited', key: RoadMaterialKey, amount: number) => {
+  const updateDeposited = (id: string, key: RoadMaterialKey, amount: number) => {
     updateRoad(id, (road) => ({
       ...road,
-      [field]: { ...road[field], [key]: Math.max(0, Math.floor(amount)) },
-      targetKnown: field === 'required' ? true : road.targetKnown,
+      deposited: { ...road.deposited, [key]: Math.max(0, Math.floor(amount)) },
     }));
   };
 
@@ -258,8 +227,6 @@ function RoadPlanner() {
         </div>
         <div className="road-actions">
           <label className="road-search"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Find a paver" aria-label="Find a paver" /></label>
-          <label className="route-select-label"><span>ADD TO</span><select value={newRoute} onChange={(event) => setNewRoute(event.target.value as RouteId)} aria-label="Route for new paver">{roadRoutes.map((route) => <option value={route.id} key={route.id}>{route.label}</option>)}</select></label>
-          <button className="add-paver-button" type="button" onClick={addPaver}><Plus size={15} /><span>Add auto-paver</span></button>
           <button className="icon-button road-clear-button" type="button" aria-label="Clear all pavers" title="Clear all pavers" onClick={clearRoads} disabled={roads.length === 0}><RotateCcw size={15} /></button>
         </div>
       </div>
@@ -280,8 +247,8 @@ function RoadPlanner() {
           return (
             <article className={`road-paver-card ${road.included ? '' : 'not-counted'}`} key={road.id}>
               <div className="road-paver-row">
-                <label className="road-inclusion" title="Include this paver in the cargo total">
-                  <input type="checkbox" checked={road.included} onChange={(event) => updateRoad(road.id, (current) => ({ ...current, included: event.target.checked }))} aria-label={`Include UC Route ${road.route} paver ${road.paver} in cargo total`} />
+                <label className="road-inclusion" title={road.targetKnown ? 'Include this paver in the cargo total' : 'Target data is unavailable for this paver'}>
+                  <input type="checkbox" checked={road.included} disabled={!road.targetKnown} onChange={(event) => updateRoad(road.id, (current) => ({ ...current, included: event.target.checked }))} aria-label={`Include UC Route ${road.route} paver ${road.paver} in cargo total`} />
                 </label>
                 <span className="road-paver-icon"><Route size={17} /></span>
                 <button className="road-paver-summary" type="button" aria-expanded={expanded} onClick={() => setExpandedRoad(expanded ? null : road.id)}>
@@ -289,16 +256,11 @@ function RoadPlanner() {
                   <span className={`road-paver-status ${complete ? 'is-complete' : !road.targetKnown ? 'is-unknown' : ''}`}>{!road.targetKnown ? 'TARGET UNKNOWN' : complete ? <><Check size={12} /> COMPLETE</> : `${totalRemaining.toLocaleString()} REMAINING`}</span>
                 </button>
                 <div className="road-paver-cargo">{packageLabels.length > 0 ? packageLabels.map((label) => <span key={label}>{label}</span>) : <span className="no-cargo">Set paver totals</span>}</div>
-                <button className="icon-button road-expand" type="button" aria-label={`${expanded ? 'Collapse' : 'Edit'} Route ${road.route} paver ${road.paver}`} onClick={() => setExpandedRoad(expanded ? null : road.id)}><ChevronDown size={17} /></button>
-                <button className="icon-button road-delete" type="button" aria-label={`Delete Route ${road.route} paver ${road.paver}`} onClick={() => { setRoads((current) => current.filter((entry) => entry.id !== road.id)); if (expanded) setExpandedRoad(null); }}><Trash2 size={15} /></button>
+                <button className="icon-button road-expand" type="button" aria-label={`${expanded ? 'Collapse' : 'Show'} Route ${road.route} paver ${road.paver}`} onClick={() => setExpandedRoad(expanded ? null : road.id)}><ChevronDown size={17} /></button>
               </div>
               {expanded && (
                 <div className="road-paver-editor">
-                  <div className="paver-label-fields">
-                    <label>ROUTE<select value={road.route} onChange={(event) => updateRoad(road.id, (current) => ({ ...current, route: event.target.value as RouteId }))}>{roadRoutes.map((route) => <option value={route.id} key={route.id}>{route.label}</option>)}</select></label>
-                    <label>PAVER #<input type="number" min="1" step="1" value={road.paver} onChange={(event) => updateRoad(road.id, (current) => ({ ...current, paver: Math.max(1, Math.floor(Number(event.target.value) || 1)) }))} /></label>
-                  </div>
-                  {!road.targetKnown && <div className="paver-target-warning">No verified preset for this paver. Enter its REQUIRED amounts from the in-game paver.</div>}
+                  {!road.targetKnown && <div className="paver-target-warning">This road is buildable, but its material target is missing from the available data. It can’t be included in cargo totals yet.</div>}
                   <div className="paver-resource-grid">
                     {roadMaterials.map(({ key, name, tone, capacity }) => {
                       const Icon = materialIcons[key];
@@ -311,8 +273,8 @@ function RoadPlanner() {
                         <section className="paver-resource-card" key={key}>
                           <div className="paver-resource-title"><span className={`material-icon material-${tone}`}><Icon size={16} /></span><strong>{name}</strong>{key !== 'chiral' && <span className="capacity-hint">S {capacity?.[0]} / XL4 {capacity?.[6]}</span>}</div>
                           <div className="paver-input-row">
-                            <label>REQUIRED<input type="number" min="0" step="1" inputMode="numeric" value={road.required[key] || ''} placeholder="0" onChange={(event) => updateAmount(road.id, 'required', key, Number(event.target.value))} /></label>
-                            <label>DEPOSITED<input type="number" min="0" step="1" inputMode="numeric" value={road.deposited[key] || ''} placeholder="0" onChange={(event) => updateAmount(road.id, 'deposited', key, Number(event.target.value))} /></label>
+                            <div className="paver-required-value"><span>REQUIRED</span><strong>{road.required[key].toLocaleString()}</strong></div>
+                            <label>IN STOCK<input type="number" min="0" step="1" inputMode="numeric" value={road.deposited[key] || ''} placeholder="0" onChange={(event) => updateDeposited(road.id, key, Number(event.target.value))} aria-label={`${name} currently in stock`} /></label>
                           </div>
                           <div className="paver-remaining"><span>STILL NEEDED</span><strong>{remaining.toLocaleString()}</strong></div>
                           {key !== 'chiral' && remaining > 0 && (
@@ -333,7 +295,7 @@ function RoadPlanner() {
           );
         })}
       </div>
-      <div className="road-source-note"><span>DS1 COMMUNITY PAVER TARGETS</span><a href={roadPresetSource} target="_blank" rel="noreferrer">Paver data source</a><span className="source-divider">/</span><span>Four Route 23 targets are unverified; deposits start at 0. Chiral Crystals are carried loose.</span></div>
+      <div className="road-source-note"><span>DS1 COMMUNITY PAVER TARGETS</span><a href={roadPresetSource} target="_blank" rel="noreferrer">Paver data source</a><span className="source-divider">/</span><span>Four Route 23 targets are unverified and excluded from totals. Deposits start at 0. Chiral Crystals are carried loose.</span></div>
     </section>
   );
 }
