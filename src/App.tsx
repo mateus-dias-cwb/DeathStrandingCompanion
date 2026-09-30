@@ -302,8 +302,8 @@ function App() {
 
       <footer className="bottom-status">
         <div aria-live="polite"><span className={`status-indicator ${isOnline ? 'is-online' : 'is-offline'}`} /> CONNECTION STATUS <b>{isOnline ? 'ONLINE' : 'OFFLINE'}</b></div>
-        <div>BRIDGES ESTABLISHED <b>01 / 05</b></div>
-        <div className="footer-meta"><span className="footer-game">DEATH STRANDING <span>•</span> FIELD TOOLS</span><span className="footer-version">VERSION <b>v{__APP_VERSION__}</b></span></div>
+        <div className="footer-version">VERSION <b>v{__APP_VERSION__}</b></div>
+        <div className="footer-game">DEATH STRANDING <span>•</span> FIELD TOOLS</div>
       </footer>
 
       {editing && (
