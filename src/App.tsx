@@ -11,6 +11,7 @@ import {
   Package,
   Plus,
   RotateCcw,
+  Route,
   Search,
   Settings2,
   ShieldCheck,
@@ -18,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { resources, structures, type Category, type ResourceKey, type Structure } from './data';
+import RoadPlanner from './RoadPlanner';
 
 type PlanItem = { id: string; quantity: number };
 type RecipeMap = Record<string, Partial<Record<ResourceKey, number>>>;
@@ -31,6 +33,7 @@ const categoryOptions: ('All structures' | Category)[] = ['All structures', 'Net
 const blankInventory: Inventory = { chiral: 0, metals: 0, ceramics: 0, chemicals: 0, alloys: 0 };
 
 function App() {
+  const [activePlanner, setActivePlanner] = useState<'structures' | 'roads'>('structures');
   const [activeCategory, setActiveCategory] = useState<(typeof categoryOptions)[number]>('All structures');
   const [search, setSearch] = useState('');
   const [plan, setPlan] = useState<PlanItem[]>([]);
@@ -113,6 +116,11 @@ function App() {
       </header>
 
       <main id="top" className="main-layout">
+        <div className="planner-mode-switch" role="tablist" aria-label="Planner mode">
+          <button className={`planner-mode-button ${activePlanner === 'structures' ? 'active' : ''}`} type="button" role="tab" aria-selected={activePlanner === 'structures'} onClick={() => setActivePlanner('structures')}><Boxes size={16} /> Structure planner</button>
+          <button className={`planner-mode-button ${activePlanner === 'roads' ? 'active' : ''}`} type="button" role="tab" aria-selected={activePlanner === 'roads'} onClick={() => setActivePlanner('roads')}><Route size={16} /> Road planner</button>
+        </div>
+        {activePlanner === 'structures' ? <>
         <section className="planner-column">
           <div className="page-heading">
             <div>
@@ -245,6 +253,7 @@ function App() {
 
           <div className="manifest-bottom"><ShieldCheck size={15} /><span>PLAN SAVED LOCALLY FOR THIS SESSION</span><ArrowUpRight size={14} /></div>
         </aside>
+        </> : <RoadPlanner />}
       </main>
 
       <footer className="bottom-status"><div><span className="status-indicator" /> CONNECTION STATUS <b>OFFLINE</b></div><div>BRIDGES ESTABLISHED <b>01 / 05</b></div><div className="footer-game">DEATH STRANDING <span>•</span> FIELD TOOLS</div></footer>

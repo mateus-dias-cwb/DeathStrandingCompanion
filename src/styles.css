@@ -50,6 +50,14 @@ button:disabled { cursor: default; opacity: .45; }
 .profile-mark { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 50%; background: #d5ddda; color: #4c6662; font: 600 11px var(--mono); }
 
 .main-layout { max-width: 1510px; margin: 0 auto; padding: 44px 4.4% 28px; display: grid; grid-template-columns: minmax(0, 1fr) 354px; gap: 32px; align-items: start; }
+.planner-mode-switch { grid-column: 1 / -1; grid-row: 1; display: flex; width: fit-content; align-items: center; gap: 3px; margin-top: -17px; padding: 3px; border: 1px solid #d4dad5; background: rgba(241, 243, 238, .84); }
+.planner-mode-button { min-height: 32px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid transparent; background: transparent; color: #89938f; cursor: pointer; font-size: 10px; font-weight: 700; transition: color .15s, background .15s, border-color .15s; }
+.planner-mode-button:hover { color: #44534e; }
+.planner-mode-button.active { border-color: #d6ddd7; background: #fbfcf8; color: #34433f; box-shadow: 0 1px 3px rgba(38, 49, 45, .04); }
+.planner-mode-button svg { color: #719083; }
+.planner-column { grid-column: 1; grid-row: 2; }
+.manifest-panel { grid-column: 2; grid-row: 2; }
+.road-planner { grid-column: 1 / -1; grid-row: 2; min-width: 0; animation: reveal .25s both; }
 .planner-column { min-width: 0; }
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-bottom: 26px; }
 .eyebrow, .eyebrow-small { color: #8b9592; font: 500 9px var(--mono); letter-spacing: 1.5px; }
