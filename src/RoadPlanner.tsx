@@ -19,6 +19,7 @@ import {
   roadMaterials,
   roadRoutes,
   type ContainerCounts,
+  type PackingGoal,
   type RoadMaterialAmounts,
   type RoadMaterialKey,
 } from './roadData';
@@ -39,8 +40,17 @@ type PlannedRoad = RoadEntry & {
 
 type RouteFilter = 'all' | RouteId;
 const STORAGE_KEY = 'bridge-planner-road-pavers-v1';
+const PACKING_GOAL_KEY = 'bridge-planner-packing-goal-v1';
 const emptyContainerCounts = (): ContainerCounts => ({ S: 0, M: 0, L: 0, XL1: 0, XL2: 0, XL3: 0, XL4: 0 });
 const materialIcons = { chiral: Gem, metals: Layers, ceramics: Package };
+
+function readPackingGoal(): PackingGoal {
+  try {
+    return localStorage.getItem(PACKING_GOAL_KEY) === 'least-overage' ? 'least-overage' : 'fewest';
+  } catch {
+    return 'fewest';
+  }
+}
 
 function readSavedRoads(): RoadEntry[] {
   try {
@@ -53,6 +63,7 @@ function readSavedRoads(): RoadEntry[] {
 
 function RoadPlanner() {
   const [roads, setRoads] = useState<RoadEntry[]>(readSavedRoads);
+  const [packingGoal, setPackingGoal] = useState<PackingGoal>(readPackingGoal);
   const [routeFilter, setRouteFilter] = useState<RouteFilter>('all');
   const [newRoute, setNewRoute] = useState<RouteId>('23');
   const [expandedRoad, setExpandedRoad] = useState<string | null>(null);
@@ -66,15 +77,23 @@ function RoadPlanner() {
     }
   }, [roads]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(PACKING_GOAL_KEY, packingGoal);
+    } catch {
+      // Storage can be unavailable in private browsing modes.
+    }
+  }, [packingGoal]);
+
   const plannedRoads = useMemo<PlannedRoad[]>(() => roads.map((road) => {
     const remaining = emptyRoadAmounts();
     const containers = {} as PlannedRoad['containers'];
     roadMaterials.forEach(({ key, capacity }) => {
       remaining[key] = Math.max(0, Math.ceil(road.required[key]) - Math.floor(road.deposited[key]));
-      containers[key] = planContainers(remaining[key], capacity);
+      containers[key] = planContainers(remaining[key], capacity, packingGoal);
     });
     return { ...road, remaining, containers };
-  }), [roads]);
+  }), [roads, packingGoal]);
 
   const includedSummary = useMemo(() => {
     const remaining = emptyRoadAmounts();
@@ -149,7 +168,13 @@ function RoadPlanner() {
             <div className="road-cargo-icon"><Boxes size={18} /></div>
             <div><span className="eyebrow-small">SELECTED PAVERS / {String(includedSummary.roadCount).padStart(2, '0')}</span><h2 id="road-cargo-title">Cargo to complete</h2></div>
           </div>
-          <div className="container-total"><strong>{includedSummary.packageCount}</strong><span>CONTAINERS<br />TO CARRY</span></div>
+          <div className="road-cargo-tools">
+            <div className="packing-goal-switch" role="group" aria-label="Container packing priority">
+              <button className={packingGoal === 'fewest' ? 'active' : ''} type="button" aria-pressed={packingGoal === 'fewest'} onClick={() => setPackingGoal('fewest')}>Fewest containers</button>
+              <button className={packingGoal === 'least-overage' ? 'active' : ''} type="button" aria-pressed={packingGoal === 'least-overage'} onClick={() => setPackingGoal('least-overage')}>Least overage</button>
+            </div>
+            <div className="container-total"><strong>{includedSummary.packageCount}</strong><span>CONTAINERS<br />TO CARRY</span></div>
+          </div>
         </div>
 
         <div className="road-total-grid">
@@ -180,7 +205,7 @@ function RoadPlanner() {
             );
           })}
         </div>
-        <div className="road-cargo-foot"><CircleHelp size={14} /><span>Totals include checked pavers only. Packages use the fewest containers with the least overage; road requirements vary by paver.</span></div>
+        <div className="road-cargo-foot"><CircleHelp size={14} /><span>{packingGoal === 'fewest' ? 'Fewest containers first; ties use the least overage.' : 'Least overage first; ties use the fewest containers.'} Totals include checked pavers only. Road requirements vary by paver.</span></div>
       </section>
 
       <div className="road-list-toolbar">

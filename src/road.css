@@ -7,6 +7,11 @@
 .road-cargo-title { display: flex; align-items: center; gap: 11px; }
 .road-cargo-icon { width: 33px; height: 33px; display: grid; place-items: center; background: #e8eeea; color: #68857a; }
 .road-cargo-title h2 { margin-top: 3px; color: #2b3936; font: 600 21px/.95 var(--display); }
+.road-cargo-tools { display: flex; align-items: center; gap: 12px; }
+.packing-goal-switch { display: flex; align-items: center; gap: 2px; padding: 2px; border: 1px solid #d9dfda; background: #ecefea; }
+.packing-goal-switch button { min-height: 27px; padding: 0 8px; border: 1px solid transparent; background: transparent; color: #7d8983; cursor: pointer; font-size: 8px; font-weight: 700; white-space: nowrap; }
+.packing-goal-switch button:hover { color: #45544e; }
+.packing-goal-switch button.active { border-color: #d5ddd6; background: #fbfcf8; color: #3e5148; box-shadow: 0 1px 3px rgba(38, 49, 45, .05); }
 .container-total { display: flex; align-items: center; gap: 10px; padding: 5px 10px; border-left: 1px solid #d8ded9; }
 .container-total strong { color: #33433d; font: 600 30px/.9 var(--display); }
 .container-total span { color: #89948f; font: 7px/1.45 var(--mono); letter-spacing: .55px; }
@@ -125,10 +130,13 @@
   .road-heading p { max-width: 300px; font-size: 9px; }
   .road-heading-mark { gap: 5px; padding: 6px; font-size: 7px; }
   .road-heading-mark svg { width: 18px; }
-  .road-cargo-heading { min-height: 62px; padding: 0 10px; }
+  .road-cargo-heading { min-height: 62px; flex-wrap: wrap; padding: 9px 10px; }
   .road-cargo-title { gap: 7px; }
   .road-cargo-icon { width: 29px; height: 29px; }
   .road-cargo-title h2 { font-size: 19px; }
+  .road-cargo-tools { width: 100%; justify-content: space-between; gap: 6px; }
+  .packing-goal-switch { min-width: 0; }
+  .packing-goal-switch button { min-height: 25px; padding: 0 6px; font-size: 7px; }
   .container-total { gap: 6px; padding-right: 0; padding-left: 8px; }
   .container-total strong { font-size: 26px; }
   .container-total span { font-size: 6px; }

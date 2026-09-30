@@ -1,5 +1,6 @@
 export type RoadMaterialKey = 'chiral' | 'metals' | 'ceramics';
 export type ContainerSize = 'S' | 'M' | 'L' | 'XL1' | 'XL2' | 'XL3' | 'XL4';
+export type PackingGoal = 'fewest' | 'least-overage';
 export type RoadMaterialAmounts = Record<RoadMaterialKey, number>;
 export type ContainerCounts = Record<ContainerSize, number>;
 
@@ -18,7 +19,7 @@ export const roadRoutes = [
 
 export const emptyRoadAmounts = (): RoadMaterialAmounts => ({ chiral: 0, metals: 0, ceramics: 0 });
 
-export function planContainers(amount: number, capacities: number[] | null): ContainerCounts {
+export function planContainers(amount: number, capacities: number[] | null, goal: PackingGoal = 'fewest'): ContainerCounts {
   const plan: ContainerCounts = { S: 0, M: 0, L: 0, XL1: 0, XL2: 0, XL3: 0, XL4: 0 };
   if (amount <= 0 || !capacities?.length) return plan;
 
@@ -42,7 +43,12 @@ export function planContainers(amount: number, capacities: number[] | null): Con
   }
 
   let packedTotal = demand;
-  while (packedTotal <= maximumTotal && minimumContainers[packedTotal] !== containerCount) packedTotal += 1;
+  while (packedTotal <= maximumTotal) {
+    const packageCount = minimumContainers[packedTotal];
+    const hasPlan = packageCount !== 0xffff;
+    if (hasPlan && (goal === 'least-overage' || packageCount === containerCount)) break;
+    packedTotal += 1;
+  }
   while (packedTotal > 0) {
     const index = previousSize[packedTotal];
     if (index < 0 || index >= containerSizes.length) break;
