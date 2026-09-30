@@ -1,0 +1,32 @@
+{
+  "id": "./",
+  "name": "Bridge Planner | Death Stranding",
+  "short_name": "Bridge Planner",
+  "description": "Plan structures and calculate your delivery materials.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#e8e9e4",
+  "theme_color": "#e9e8e2",
+  "icons": [
+    {
+      "src": "./icons/bridge-planner-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/bridge-planner-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/bridge-planner.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
